@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{% static 'img/logo.svg' %}">
+    {% block title %}{% endblock %}
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'progressbar.css' %}">
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/chart.min.js' %}"></script>
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+</head>
+
+<style>
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .cs-whiteFont:active{
+        color: #FFFFFF!important;
+    }
+
+    .noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none; /* Safari */
+        -khtml-user-select: none; /* Konqueror HTML */
+        -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome and Opera */
+    }
+
+    .hide_scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mycontent-left {
+        border-right: 2px solid #707070;
+        height: 80%;
+    }
+
+    .hover_text:hover{
+        cursor: pointer;
+    }
+
+    hr.dashed {
+        border-top: 3px dashed #979797;
+    }
+      
+    /* Dotted border */
+    hr.dotted {
+        border-top: 3px dotted #979797;
+    }
+      
+    /* Solid border */
+    hr.solid {
+    border-top: 3px solid #979797;
+    }
+      
+    /* Rounded border */
+    hr.rounded {
+    border-top: 3px solid #979797;
+    border-radius: 5px;
+    }
+
+    .greyed_out{
+        color: #8A8A8A;
+    }
+
+    .tab_status.active{
+        background-color: #00A4F6 !important;
+        transition: 300ms;
+    }
+
+    .tab_status.active:hover{
+        background-color: #0093dd !important;
+        color: #ffffff !important;
+    }
+
+    .tab_status.greyed_out:hover{
+        transition: 300ms;
+    }
+
+    .tab_status:hover{
+        color: #8A8A8A !important;
+        cursor: pointer;
+        background-color: #e2e2e2;
+    }
+
+    .back_hover:hover{
+        cursor: pointer;
+        border: #2ceb92;
+        background-color: #f3f3f3;
+        border-radius: 8px;
+        transition: 300ms;
+    }
+
+    .back_hover:active{
+        cursor: pointer;
+        border: #2ceb92;
+        background-color: #f3f3f3;
+        border-radius: 16px;
+        transition: 300ms;
+    }
+
+    .back_hover{
+        border: #2ceb92;
+        border-radius: 0px;
+        transition: 1000ms;
+    }
+
+    .back_hover.active{
+        background-color: #f3f3f3 !important;
+        border: 4px solid #2ceb92;
+        border-radius: 16px;
+        transition: 300ms;
+    }
+
+    .detail_hover{
+        transition: 300ms;
+    }
+
+    .detail_hover:hover{
+        cursor: pointer;
+        background-color: #dadada;
+        border-radius: 8px;
+        transition: 600ms;
+    }
+
+    .detail_hover:active{
+        cursor: pointer;
+        background-color: #dadada;
+        border-radius: 18px;
+        transition: 600ms;
+    }
+
+    .tab_sidebar:hover{
+        background-color: #e2e2e2;
+        border-radius: 4px;
+        transition: 300ms;
+    }
+
+    .tab_sidebar:active{
+        background-color: #e2e2e2;
+        border-radius: 6px;
+        transition: 300ms;
+    }
+
+    .fit_text{
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .carousel-control-next-icon, .carousel-control-prev-icon{
+        background-color: #747474;
+        height: 20%;
+        border-radius: 4px;
+    }
+</style>
+
+<body class="noselect">
+    <div class="d-flex flex-row">
+        <div class="col-2 d-flex flex-column flex-shrink-0 vh-100 pb-3 pt-4 ps-3 pe-3 bg-light shadow">
+            <a href="/proyek" draggable="false" class="d-flex align-items-center justify-content-center mt-3 mb-3 link-dark text-decoration-none">
+                <img src="{% static 'img\logo_wide.svg' %}" draggable="false" style="width: 100%; height: 100%">
+            </a>
+            <p class="fw-bold mt-5" style="color: #444444">Menu</p>
+            <ul class="nav nav-pills flex-column mb-auto mt-1">
+                <li class="nav-item">
+                    <!-- <li>
+                        <a href="/home" draggable="false" class="nav-link mb-2 {% if home == 'active' %} active fw-semibold {% else %} link-dark fw-normal tab_sidebar {% endif %}" {% if home == 'active' %} style="background-color: #00A4F6;" {% endif %}> 
+                            {% if home == 'active' %} 
+                            <img src="{% static 'img/ico_halamanUt_white.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% else %}
+                            <img src="{% static 'img/ico_halamanUt_black.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% endif %}
+                            Halaman Utama 
+                        </a>
+                    </li> -->
+                    <li>
+                        <a href="/proyek" draggable="false" class="nav-link mb-2 {% if proyek == 'active' %} active fw-semibold {% else %} link-dark fw-normal tab_sidebar {% endif %}" {% if proyek == 'active' %} style="background-color: #00A4F6;" {% endif %}> 
+                            {% if proyek == 'active' %} 
+                            <img src="{% static 'img/ico_proyek_white.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% else %}
+                            <img src="{% static 'img/ico_proyek_black.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% endif %}
+                            Proyek 
+                        </a>
+                    </li>
+                    {% if request.session.jabatan_pengguna == 0 %}
+                    <li>
+                        <a href="/pengguna" draggable="false" class="nav-link mb-2 {% if pengguna == 'active' %} active fw-semibold {% else %} link-dark fw-normal tab_sidebar {% endif %}" {% if pengguna == 'active' %} style="background-color: #00A4F6;" {% endif %}> 
+                            {% if pengguna == 'active' %} 
+                            <img src="{% static 'img/ico_pengguna_white.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% else %}
+                            <img src="{% static 'img/ico_pengguna_black.svg' %}" draggable="false" style="width: 20px; height: 20px;">
+                            {% endif %}
+                            Pengguna
+                        </a>
+                    </li>
+                    {% endif %}
+                </li>
+            </ul>
+            <div class="dropdown">
+                <a href="#" draggable="false" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="{% static 'img/account_circle_black.svg' %}" draggable="false" alt="" width="32" height="32" class="rounded-circle me-2">
+                    <strong>{{ request.session.nama_pengguna }}</strong>
+                </a>
+                <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2">
+                    <li><a class="dropdown-item cs-whiteFont" draggable="false" href="/pengguna/detail_pengguna/{{request.session.id_pengguna_login}}" style="color: #444444">Ubah Informasi Akun</a></li>
+                    <hr class="my-2">
+                    <li><a class="dropdown-item cs-whiteFont" draggable="false" href="{% url 'logout' %}" style="color: #444444">Keluar</a></li>
+                  </ul>
+            </div>
+        </div>
+        {% if pengguna == 'active' or daftar_pekerjaan == 'active' %}
+        <div class="col-10">
+            {% block content_pengguna %}{% endblock %}
+        </div>
+        {% else %}
+        <div class="col-7">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="col-3 d-flex flex-column flex-shrink-0 px-3 vh-100 pt-5 bg-light shadow">
+            {% block right_sidebar_content %}{% endblock %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,106 @@
+{% extends 'monitoring.html' %}
+{% load static %}
+{% block title %}
+    <title> Monitoring | Proyek </title> 
+{% endblock %}
+{% block content %}
+    <div class="container d-flex flex-column vh-100 p-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header">
+                <div class="d-sm-flex flex-row justify-content-between">
+                    <div class="d-flex flex-row justify-content-center align-items-center">
+                        <img src="{% static 'img/ico_proyek_black.svg' %}" draggable="false" style="width: 32px; height: 32px">
+                        <span class="mx-2" style="font-size:1.5em; font-weight: 400">Tambah Proyek</span>
+                    </div>
+                    <div class="d-flex flex-row">
+                        <button type="button" class="btn btn-success" id="btn_simpanData" onclick="save_form()">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body overflow-auto hide_scroll">
+                <form action="{% url 'tambah_proyek_save' %}" id="form_proyek" method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex flex-column h-100">
+                        <input type="hidden" id="input_kota" name="kota" required>
+                        <label for="nama_proyek" class="form-label">Nama Proyek</label>
+                        <input class="form-control w-50" type="text" placeholder="Masukkan nama proyek" name="nama_proyek" value="" id="input_nama_proyek" required>
+
+                        <label for="budget_proyek" class="form-label mt-4">Budget Proyek</label>
+                        
+                        <div class="input-group w-50">
+                            <span class="input-group-text" id="addon-wrapping">IDR</span>
+                            <input class="form-control w-50" type="number" step="any" placeholder="Masukkan budget" name="budget_proyek" value="0.00" onkeyup="harga_tip(this.value)" id="input_harga_proyek" min="1000" required>
+                        </div>
+                        <div id="hargaHelp" class="form-text ms-1">IDR 0.00</div>
+
+                        <label for="uraian" class="form-label mt-4">Uraian Proyek</label>
+                        <textarea name="uraian" class="form-control w-50" id="input_uraian" required></textarea>
+
+                        <label for="penanggung_jawab" class="form-label mt-4">Penanggung Jawab</label>
+                        <div class="input-group w-50">
+                            <select name="penanggung_jawab" class="form-select" id="input_penanggung_jawab" required>
+                                <option value="" style="display: none" selected>Pilih Penanggung Jawab</option>
+                                {% for penanggungjawab in data_penanggungjawab %}
+                                    <option value="{{penanggungjawab.id_pengguna}}">{{penanggungjawab.nama_pengguna}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <label for="tanggal_mulai" class="form-label mt-4">Tanggal Mulai Proyek</label>
+                        <input type="date" class="form-control w-50" name="tanggal_mulai" id="input_tanggal_mulai" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function harga_tip(val){
+            var formatter = new Intl.NumberFormat('en-US', {
+                maximumFractionDigits: 2,
+                roundingIncrement: 5
+              });
+            document.getElementById("hargaHelp").innerHTML = "IDR "+formatter.format(val);
+        }
+
+        function save_form(){
+            var valid
+            valid = document.getElementById("form_proyek").checkValidity();
+            if (valid == false){
+              alert("Isian Tidak Boleh Kosong");
+            } else {
+              document.getElementById("form_proyek").submit();
+            }
+        }
+
+        function change_lokasi(lokasi){
+            const url = "{% url 'ajax_change_lokasi' %}"
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'lokasi_proyek': lokasi       
+                },
+                success: function () {   // `data` is the return of the view function
+                    document.getElementById("input_kota").value = lokasi;
+                }
+            });
+        }
+        
+        $(document).ready(function() {
+            $("#input_lokasi_proyek option[value={{request.session.lokasi_proyek}}]").attr("selected", true);
+            document.getElementById("hargaHelp").innerHTML = "IDR "+document.getElementById("input_harga_proyek").value;
+            document.getElementById("input_kota").value = document.getElementById("input_lokasi_proyek").value;
+        });
+    </script>
+{% endblock %}
+
+{% block right_sidebar_content %}
+    <div class="d-flex flex-row justify-content-start align-items-center">
+        <img src="{% static 'img/ico_lokasi_black.svg' %}" draggable="false">
+        <span class="fw-bold ms-3" style="color: #454545; font-size: 1.2em;">Pilih Lokasi Proyek</span>
+    </div>
+    <select class="form-select mt-4" name="lokasi_proyek" id="input_lokasi_proyek" onchange="change_lokasi(this.value)">
+        {% for lokasi in data_lokasi %} 
+            <option value="{{lokasi.id_lokasi}}">{{lokasi.nama_lokasi}}</option>
+        {% endfor %}
+    </select>
+{% endblock %}

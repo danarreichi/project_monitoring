@@ -1,0 +1,16 @@
+{% if pengguna_data %}
+{% for pengguna in pengguna_data %}
+<tr>
+    <th scope="row">{{ forloop.counter }}</th>
+    <td>{{ pengguna.nama_pengguna }}</td>
+    <td>{% if pengguna.jabatan_pengguna == 0 %} Manager {% else %} Penanggung Jawab {% endif %}</td>
+    <td>
+        <button type="button" class="btn btn-secondary w-100"
+            onclick="window.location = 'pengguna/detail_pengguna/{{ pengguna.id_pengguna }}'">Lihat Detail</button>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<td colspan="3" style="text-align: center; height: 76vh;">Data pengguna belum tersedia, coba<span
+        class="hover_text" style="font-weight: 600; color: #198754;" onclick="window.location.href = '{% url 'tambah_pengguna' %}'">tambahkan</span>sesuatu...</td>
+{% endif %}

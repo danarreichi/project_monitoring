@@ -1,0 +1,106 @@
+{% extends 'monitoring.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    <title> Monitoring | Proyek </title> 
+{% endblock %}
+{% block content_pengguna %}
+    <div class="vh-100">
+        <div class="container d-flex flex-column p-3" style="height: 45%" id="summary_pekerjaan">
+            
+            
+        </div>
+        <div class="container d-flex flex-column ps-3 pb-3 pe-3" style="height: 55%;">
+            <div class="card h-100 shadow-sm" style="min-height: 90%">
+                <div class="card-header">
+                    <div class="d-sm-flex flex-row justify-content-between">
+                        <div class="d-flex flex-row justify-content-start w-25">
+                            <ul class="nav nav-pills nav-fill">
+                                <li class="nav-item mx-1">
+                                  <a class="nav-link active fw-semibold position-relative tab_status" draggable="false" tab-value="0">Berjalan</a>
+                                </li>
+                                <li class="nav-item mx-1">
+                                  <a class="nav-link tab_status greyed_out" draggable="false" tab-value="1">Selesai</a>
+                                </li>
+                            </ul>
+                            <hr class="rounded">
+                        </div>
+                        <div class="d-flex flex-row justify-content-end align-items-center w-75">
+                            <input class="form-control w-50" type="search" placeholder="Cari Pekerjaan ..." aria-label="Search" id="search-pekerjaan-id" onkeyup="list_pekerjaan()">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body h-100 overflow-hidden">
+                    <div id="pekerjaan-list" class="overflow-auto hide_scroll h-100"> {% comment %} tempat ajax daftar project {% endcomment %}
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var tab_status;
+
+        function list_pekerjaan(val){
+            if(val){
+                active_tab = val;
+            } else if(tab_status) {
+                active_tab = tab_status;
+            } else {
+                active_tab = 0;
+            }
+            const url = "{% url 'ajax_daftar_pekerjaan' %}";        // get the url of the view
+            const search = document.getElementById("search-pekerjaan-id").value;
+            const id_pengguna = "{{request.session.id_pengguna_login}}";
+            const id_investasi = "{{id_investasi}}";
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'tab_status' : active_tab,  // add the data to the GET parameters
+                    'search': search,
+                    'id_pengguna': id_pengguna,
+                    'id_investasi': id_investasi     
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    $("#pekerjaan-list").html(data);
+                }
+            });
+        }
+
+        function summary_pekerjaan(){
+            const url = "{% url 'ajax_summary_pekerjaan' %}";        // get the url of the view
+            const id_investasi = "{{id_investasi}}";
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'id_investasi': id_investasi     
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    $("#summary_pekerjaan").html(data);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            summary_pekerjaan();
+            list_pekerjaan();
+        });
+
+        setInterval(function(){
+            summary_pekerjaan();
+            list_pekerjaan();
+        }, 10000)
+
+        $(".tab_status").click(function() {
+            tab_status = $(this).attr("tab-value");
+            $(".tab_status").removeClass('active fw-semibold');
+            $(".tab_status").addClass('greyed_out');
+
+            $("[tab-value='"+ tab_status +"']").removeClass('greyed_out');
+            $("[tab-value='"+ tab_status +"']").addClass('active fw-semibold');
+            list_pekerjaan($(this).attr("tab-value"));
+        });
+    </script>
+{% endblock %}

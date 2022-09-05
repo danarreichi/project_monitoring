@@ -1,0 +1,610 @@
+{% load static %}
+{% load humanize %}
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </symbol>
+        <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </symbol>
+        <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </symbol>
+    </svg>
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-primary alert-dismissible fade show" role="alert">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#info-fill"/></svg>
+            {{message}}
+            <button type="button" class="btn-close ms-4" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    <div class="card h-100 shadow-sm overflow-hidden" style="min-height: 25%">
+        <div class="card-header">
+            <div class="d-sm-flex flex-row justify-content-between">
+                <div class="d-flex flex-row justify-content-start align-items-center fit_text align-items-center w-50">
+                    <img src="{% static 'img/ico_proyek_black.svg' %}" style="width: 32px; height: 32px" draggable="false">
+                    <span class="mx-2" style="font-size:1.5em; font-weight: 400">Daftar Pekerjaan Proyek {{data_investasi.nama_investasi}}</span>
+                </div>
+                <div class="d-flex flex-row justify-content-center align-items-center">
+                    {% if data_investasi.status_master_investasi == -1 %}
+                        {% if data_investasi.status_kunci_investasi == 0 %}
+                            <button type="button" id="button_tambah_pekerjaan" class="btn btn-success px-5" onclick="window.location = '/proyek/detail_proyek/{{data_investasi.id_investasi}}/tambah_pekerjaan'">Tambah Pekerjaan</button>
+                        {% endif %}
+                    {% endif %}
+                    {% if data_investasi.status_master_investasi == -1 %}
+                        {% if request.session.jabatan_pengguna == 0 or data_investasi.status_kunci_investasi == -1 %}
+                            {% comment %} <button type="button" id="button_tambah_pekerjaan_forced" class="btn btn-success px-5 ms-4" onclick="window.location = '/proyek/detail_proyek/{{data_investasi.id_investasi}}/tambah_pekerjaan_forced'">Tambah Pekerjaan</button> {% endcomment %}
+                            <button type="button" id="button_tambah_pekerjaan_forced" class="btn btn-danger px-5" style="display: none;" onclick="window.location = '/proyek/detail_proyek/{{data_investasi.id_investasi}}/tambah_pekerjaan_forced'">Tambah Pekerjaan (OverBudget)</button>
+                            {% if data_investasi.status_kunci_investasi == 1 %}
+                                <button type="button" id="button_unlock_pekerjaan" class="btn btn-warning px-5 ms-2" style="display: none;" onclick="bukaKunci()">Buka Kunci Investasi</button>
+                            {% endif %}
+                            {% if data_investasi.status_kunci_investasi == -1 and request.session.jabatan_pengguna == 0 %}
+                                <button type="button" id="button_lock_pekerjaan" class="btn btn-warning px-5 ms-2" onclick="Kunci()">Kunci Investasi</button>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body overflow-auto hide_scroll">
+            <div class="d-flex flex-row">
+                <div class="d-flex flex-column w-25">
+                    <div class="d-flex flex-column w-100">
+                        <input type="hidden" name="status_kunci_investasi" id="status_kunci_investasi" value="{{data_investasi.status_kunci_investasi}}" readonly>
+                        <span class="fw-semibold fs-6">Rencana Budget Proyek</span>
+                        <span class="fw-bold" style="font-size: 2.9rem;" title="Rp{{data_investasi.nilai_investasi|intcomma}}" id="budget_proyek">Rp{{data_investasi.nilai_investasi|intword}}</span>
+                    </div>
+                    <div class="d-flex flex-column w-100 mt-3">
+                        <span class="fw-semibold fs-6">Sisa Budget Proyek</span>
+                        <span class="fw-bold" id="budget_sisa" sisa-investasi="{{sisa_real|stringformat:".2f"}}" title="Sisa Budget Realisasi: Rp{{sisa_real|intcomma}}" style="font-size: 2.9rem;">Rp{{tampilan_sisa|intword}}</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column w-25 ms-3">
+                    <div class="d-flex flex-column w-100">
+                        <span class="fw-semibold fs-6">Tanggal Proyek Mulai</span>
+                        <span class="fw-bold" style="font-size: 2.9rem;">{{data_investasi.tanggal_mulai}}</span>
+                    </div>
+                    <div class="d-flex flex-column w-100 mt-3">
+                        <span class="fw-semibold fs-6">Target Tanggal Selesai</span>
+                        <span id="tgl_estimasi" class="fw-bold" style="font-size: 3rem;">None</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column w-50 h-100 justify-content-end align-items-end">
+        
+                    <div id="carouselExampleControls" class="carousel slide w-100" data-interval="false">
+                        <div class="carousel-inner">
+        
+                          <div class="carousel-item" data-item="1">
+                            <div class="d-flex w-100 justify-content-center align-items-center">
+                                <div class="d-flex flex-column justify-content-center align-items-center" style="width: 80%;">
+                                    <span class="fw-semibold fs-6 mb-3">Penyelesaian Investasi</span>
+                                    <div role="circleprogress" aria-valuenow="{{summary_pct.pct__avg|floatformat:1}}" aria-valuemin="0" aria-valuemax="100" style="--value:{{summary_pct.pct__avg|stringformat:"f"}}">
+                                    {{summary_pct.pct__avg|floatformat:1}}%
+                                </div>
+                                </div>
+                            </div>
+                          </div>
+        
+                          <div class="carousel-item" data-item="2">
+                            <div class="d-flex w-100 justify-content-center align-items-center">
+                                <div class="d-flex flex-column justify-content-center align-items-center" style="width: 80%;">
+                                    <canvas id="myChart"></canvas>
+                                </div>
+                            </div>
+                          </div>
+        
+                        </div>
+                        <button class="carousel-control-prev" id="prev" onclick="prev()" type="button">
+                          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" id="next" onclick="next()" type="button">
+                          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        sisa = $("#budget_sisa").attr("sisa-investasi");
+
+        status = document.getElementById("status_kunci_investasi").value;
+
+        if(sisa <= 0){
+            //document.getElementById("button_tambah_pekerjaan").style.display = "none";
+            if(document.getElementById("button_tambah_pekerjaan")){
+                document.getElementById("button_tambah_pekerjaan").remove();
+            }
+            if(document.getElementById("button_tambah_pekerjaan_forced")){
+                document.getElementById("button_tambah_pekerjaan_forced").style.display = "";
+            }
+            if(status==0){
+                set_kunci(1);
+            }
+            if(document.getElementById("button_unlock_pekerjaan")){
+                document.getElementById("button_unlock_pekerjaan").style.display = "";
+            }
+        }
+
+        function bukaKunci(){
+            let confirmAction = confirm("Apakah anda yakin ingin membuka kunci investasi ini?");
+            if(confirmAction){
+                window.location = '/bukainvestasi/{{data_investasi.id_investasi}}';
+            } else {
+                alert("Aksi dibatalkan");
+            }
+        }
+
+        function Kunci(){
+            let confirmAction = confirm("Apakah anda yakin ingin mengunci investasi ini?");
+            if(confirmAction){
+                document.getElementById("button_lock_pekerjaan").remove();  
+                window.location = '/kunciinvestasi/{{data_investasi.id_investasi}}';
+            } else {
+                alert("Aksi dibatalkan");
+            }
+        }
+
+        if(sisa>0){
+            if(status==1 || status==-1){
+                set_kunci(0);
+            }
+        }
+
+        function set_kunci(value){
+            const url = "{% url 'ajax_kunci_status_investasi' %}";
+            const stat = value;
+            const id_investasi = {{data_investasi.id_investasi}}
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'status_kunci_investasi' : stat,  // add the data to the GET parameters    
+                    'id_investasi' : id_investasi
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    
+                }
+            });
+        }
+
+        function getTot(arr, prop) {
+            var total = 0;
+            for (var i=0 ; i<arr.length ; i++) {
+                    total += arr[i][prop];
+            }
+            return total;
+        }
+
+        function getMax(arr, prop) {
+            var max;
+            for (var i=0 ; i<arr.length ; i++) {
+                if (max == null || parseInt(arr[i][prop]) > parseInt(max[prop]))
+                    max = arr[i];
+            }
+            return max;
+        }
+
+        function getArrMin(arr) {
+            var len = arr.length, min = Infinity;
+            while (len--) {
+              if (arr[len] < min) {
+                min = arr[len];
+              }
+            }
+            return min;
+        };
+
+        function getArrMax(arr) {
+            var len = arr.length, max = -Infinity;
+            while (len--) {
+              if (arr[len] > max) {
+                max = arr[len];
+              }
+            }
+            return max;
+        };
+
+        function getindexOfArrMax(arr) {
+            if (arr.length === 0) {
+                return -1;
+            }
+        
+            var max = arr[0];
+            var maxIndex = 0;
+        
+            for (var i = 1; i < arr.length; i++) {
+                if (arr[i] > max) {
+                    maxIndex = i;
+                    max = arr[i];
+                }
+            }
+        
+            return maxIndex;
+        };
+
+        function mergeAndSort(a1, a2) {
+            var matchCount = 0;
+            var ret = [];
+          
+            for (var i = 0; i < a1.length; i++) {
+              var val = a2[matchCount];
+              if (a1[i] > val) {
+                ret.push(val)
+                matchCount++
+                i--;
+                continue;
+              }
+              if (a1[i] > 0) {
+                ret.push(a1[i]);
+              }
+            }
+            return ret;
+        }
+
+        function uniq_fast(a) {
+            var seen = {};
+            var out = [];
+            var len = a.length;
+            var j = 0;
+            for(var i = 0; i < len; i++) {
+                 var item = a[i];
+                 if(seen[item] !== 1) {
+                       seen[item] = 1;
+                       out[j++] = item;
+                 }
+            }
+            return out;
+        }
+
+        var bobot = [];
+        var detail = [];
+        var cummulative_progress = [];
+        var array_periode = [];
+        var array_periode_gabungan = [];
+        //realisasi variable
+        var pct_realisasi_array = [];
+        var periode_realisasi_array = [];
+        var sumpct_realisasi_array = [];
+        var sumbiaya_realisasi_array = [];
+
+        function chartvalue(){
+            basic = {{graph_json|safe}};
+            max_nilai_investasi = getTot(basic, "NILAI_DETAIL_INVESTASI");
+            max_periode_mulai = getMax(basic, "PERIODE_MULAI");
+            max_lama_periode = getMax(basic, "LAMA_PERIODE")
+            for (let i = 0; i < basic.length; i++) {
+                bobot.push(((basic[i]["NILAI_DETAIL_INVESTASI"] / max_nilai_investasi) * 100) / (basic[i]["LAMA_PERIODE"]))
+            }
+            
+            for (let i = 0; i < Object.keys(basic).length; i++) {
+                detail.push([bobot[i], basic[i].LAMA_PERIODE, basic[i].PERIODE_MULAI])
+            }
+
+            //console.log(detail);
+
+            //cari periode akhir
+            sum_periodeTarget = []
+            for (let i = 0; i < Object.keys(basic).length; i++) {
+                sum_periodeTarget.push(basic[i].LAMA_PERIODE + basic[i].PERIODE_MULAI)
+            }
+
+            max_index = getindexOfArrMax(sum_periodeTarget);
+
+            let maxWeek = basic[max_index].LAMA_PERIODE + basic[max_index].PERIODE_MULAI;
+            
+            //end-cari periode akhir
+            
+            //buat object kosong
+            let objFinal = []
+            for (o = 0; o < maxWeek; o++) {
+                objFinal[o] = 0;
+            }
+
+            //algoritma lila propleyer (JANGAN DICURI COK)
+            for (let i = 0; i < detail.length; i++) {
+                let weekStart = detail[i][2]
+                let repeat = detail[i][1]
+
+                for (ks = 0; ks < repeat; ks++) {
+                    if (objFinal[weekStart + ks] != 0) {
+                        objFinal[weekStart + ks] = [objFinal[weekStart + ks], detail[i][0]]
+                    } else {
+                        objFinal[weekStart + ks] = detail[i][0]
+                    }
+                }
+            }         
+
+            //algoritma flatten infinite nested array
+            function flatten(arr) {
+                return arr.reduce(function (flat, toFlatten) {
+                  return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
+                }, []);
+              }
+
+            for(let i = 0; i < objFinal.length; i++) {
+                if(typeof(objFinal[i]) === "object"){
+                    objFinal[i] = flatten(objFinal[i]);
+                }
+            }
+            //selesai
+
+            //incremental sum inside array
+            periode = 1;
+            total = 0;
+            for(let i = 0; i < Object.keys(objFinal).length; i++) {
+                if(typeof(objFinal[i]) === "object"){
+                    subtotal = 0;
+                    for(let j = 0; j < objFinal[i].length; j++){
+                        subtotal += objFinal[i][j];
+                    }
+                    total += subtotal;
+                } else {
+                    total += objFinal[i]
+                }
+                cummulative_progress.push(total);
+                array_periode.push(periode);
+                periode++;
+            }
+            progress0 = [0];
+            periode0 = [0];
+            cummulative_progress = progress0.concat(cummulative_progress);
+            array_periode = periode0.concat(array_periode);
+            //selesai
+        }
+
+        function chartvalue_realisasi(){
+            //realisasi
+            realisasi = {{realisasi_json|safe}};
+
+            for (let i = 0; i < Object.keys(realisasi).length; i++) {
+                periode_realisasi_array.push(realisasi[i]['PERIODE_SELESAI'])
+            }
+
+            //cari periode terkecil
+            getMin_A = getArrMin(periode_realisasi_array);
+            getMin_B = getArrMin(array_periode);
+            getMin_AB = Math.min(getMin_A, getMin_B);
+
+            //cari periode terbesar
+            getMax_A = getArrMax(periode_realisasi_array);
+            getMax_B = getArrMax(array_periode);
+            getMax_AB = Math.max(getMax_A, getMax_B);
+
+            
+            gap = getMin_AB;
+            if(gap<0){
+                gap = gap * (-1);
+            }
+
+            addons = []
+            for (i = 0; i < gap; i++){
+                addons.push(0);
+            }
+            
+            cummulative_progress = addons.concat(cummulative_progress);
+
+            //console.log(cummulative_progress);
+
+            for(let i = getMin_AB; i <= getMax_AB; i++){
+                array_periode_gabungan.push(i);
+            }
+
+            //console.log(array_periode_gabungan);
+
+            new_array = []
+            array_biaya = []
+            for (let i = 0; i < array_periode_gabungan.length; i++){
+                new_array[i] = 0;
+                array_biaya[i] = 0;
+            }
+
+            //console.log(new_array);
+
+            for(let i = 0; i < Object.keys(realisasi).length; i++){
+                for(let j = 0; j < array_periode_gabungan.length; j++){
+                    if(array_periode_gabungan[j] == realisasi[i]["PERIODE_SELESAI"]){
+                        new_array[j] = realisasi[i]["PCT"];
+                        array_biaya[j] = realisasi[i]["NILAI_PEKERJAAN"];
+                    }
+                }
+            }
+
+            //incremental sum biaya array
+            sumbiaya_realisasi_array = array_biaya;
+            sumbiaya_realisasi_array2 = [];
+            total = 0;
+            for(let i = 0; i < sumbiaya_realisasi_array.length; i++) {
+                total += sumbiaya_realisasi_array[i];
+                sumbiaya_realisasi_array2.push(total);
+            }
+            sumbiaya_realisasi_array = sumbiaya_realisasi_array2;
+
+
+            //incremental sum progress
+            sumpct_realisasi_array = new_array;
+            sumpct_realisasi_array2 = [];
+            total = 0;
+            for(let i = 0; i < sumpct_realisasi_array.length; i++) {
+                total += sumpct_realisasi_array[i];
+                sumpct_realisasi_array2.push(total);
+            }
+            sumpct_realisasi_array = sumpct_realisasi_array2;
+            //end-realisasi
+        }
+
+        $(document).ready(function(){
+            car_active = {{request.session.carousel}};
+            {% if graph_json|length > 2%}
+                chartvalue();
+                tanggal_estimasi();
+            {% endif %}
+            {% if realisasi_json|length > 2%}
+                chartvalue_realisasi();
+            {% endif %}
+            chart();    
+            carousel_hider();
+        });
+
+        function carousel_hider(){
+            $(".carousel-item").removeClass('active');
+            $("[data-item='"+ car_active +"']").addClass('active');
+            if(car_active==1){
+                document.getElementById('prev').style.display = "none";
+                document.getElementById('next').style.display = "";
+                $('#carouselExampleControls').carousel(0);
+            }else if (car_active==2){
+                document.getElementById('prev').style.display = "";
+                document.getElementById('next').style.display = "none";
+                $('#carouselExampleControls').carousel(1);
+            }
+        }
+
+        function carousel_setter(value){
+            const url = "{% url 'ajax_status_carousel' %}";
+            const stat = value;
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {   
+                    'carousel_stat' : stat
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    
+                }
+            });
+        }
+
+        function prev(){
+            document.getElementById('prev').style.display = "none";
+            document.getElementById('next').style.display = "";
+            carousel_setter(1);
+            $('#carouselExampleControls').carousel(0);
+            //carousel_hider();
+        };
+
+        function next(){
+            document.getElementById('prev').style.display = "";
+            document.getElementById('next').style.display = "none";
+            carousel_setter(2);
+            $('#carouselExampleControls').carousel(1);
+            //carousel_hider();
+        };
+
+        function tanggal_estimasi(){
+            waktu = "{{data_investasi.tanggal_mulai|date:'Y-m-d'}}";
+            var minggu_akhir = new Date(waktu);
+            var jumlah_minggu = getArrMax(array_periode);
+            minggu_akhir.setDate((minggu_akhir.getDate() + jumlah_minggu * 7) - 1);
+
+            //long date estimasi
+            options = { year: 'numeric', month: 'short', day: 'numeric' };
+            document.getElementById("tgl_estimasi").innerHTML = new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_akhir);
+
+            //long date estimasi
+            options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById("tgl_estimasi").title = new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_akhir);
+        }
+
+        function chart(){
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {% if realisasi_json|length == 2 %}array_periode{% else %}array_periode_gabungan{% endif %},
+                    datasets: [{
+                        label: 'Target',
+                        data: cummulative_progress,
+                        backgroundColor: [
+                            '#3dbcfc'
+                        ],
+                        borderColor: [
+                            '#0093dd'
+                        ],
+                        borderWidth: 2
+                    }{% if realisasi_json|length > 2%}, {
+                        label: 'Realisasi',
+                        data: sumpct_realisasi_array,
+                        backgroundColor: [
+                            '#f4f79c'
+                        ],
+                        borderColor: [
+                            '#d6dd00'
+                        ],
+                        borderWidth: 2
+                    }{% endif %}]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Periode (Minggu Ke-)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    animation: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Minggu Ke '+context[0].label;
+                                },
+                                afterTitle: function(context) {
+                                    waktu = "{{data_investasi.tanggal_mulai|date:'Y-m-d'}}";
+                                    var minggu_akhir = new Date(waktu);
+                                    var minggu_awal = new Date(waktu);
+
+                                    var jumlah_minggu = context[0].label;
+                                    if(context[0].label > 0){
+                                        minggu_akhir.setDate((minggu_akhir.getDate() + jumlah_minggu * 7) - 1);
+                                        minggu_awal.setDate((minggu_awal.getDate() + jumlah_minggu * 7) - 7);
+                                        options = { year: 'numeric', month: 'long', day: 'numeric' };
+                                        return '('+ new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_awal) +' - ' + new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_akhir) +')';
+                                    } else if(context[0].label < 0){
+                                        minggu_akhir.setDate((minggu_akhir.getDate() + jumlah_minggu * 7));
+                                        minggu_awal.setDate((minggu_awal.getDate() + jumlah_minggu * 7) - 6);
+                                        options = { year: 'numeric', month: 'long', day: 'numeric' };
+                                        return '('+ new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_awal) +' - ' + new Intl.DateTimeFormat(['ban', 'id'], options).format(minggu_akhir) +')';
+                                    }
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+            
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    }
+                                    return ' ' + label;
+                                },
+                                footer: function(context) {
+                                    if(sumbiaya_realisasi_array.length > 0){
+                                        var rp_formatter = new Intl.NumberFormat('id-ID', {
+                                            style: 'currency',
+                                            currency: 'IDR'
+                                          });
+                                        return 'Pemakaian Budget: ' + rp_formatter.format(sumbiaya_realisasi_array[context[0].dataIndex]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>

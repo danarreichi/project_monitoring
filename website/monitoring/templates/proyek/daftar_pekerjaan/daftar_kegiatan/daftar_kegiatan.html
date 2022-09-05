@@ -1,0 +1,290 @@
+{% extends 'monitoring.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    <title> Monitoring | Proyek </title> 
+{% endblock %}
+{% block content_pengguna %}
+    <div class="vh-100">
+        <div class="container d-flex flex-column p-3 h-100">
+            <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </symbol>
+                <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                </symbol>
+                <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </symbol>
+            </svg>
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#info-fill"/></svg>
+                    {{message}}
+                    <button type="button" class="btn-close ms-4" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            <div class="card h-100 shadow-sm" style="min-height: 90%">
+                <div class="card-header"  id="Reloadhere">
+                    <div class="d-sm-flex flex-row justify-content-end">
+                        <div class="d-flex flex-row justify-content-start align-items-center fit_text align-items-center w-50">
+                            <img src="{% static 'img/ico_proyek_black.svg' %}" style="width: 32px; height: 32px" draggable="false">
+                            <span class="mx-2" style="font-size:1.5em; font-weight: 400">Daftar Kegiatan Pekerjaan {{data_pekerjaan.nama_detail_investasi}}</span>
+                        </div>
+                        <div class="d-flex flex-row justify-content-end align-items-center w-50">
+                            <input class="form-control w-50" type="search" placeholder="Cari Kegiatan ..." aria-label="Search" id="search-kegiatan-id" onkeyup="list_kegiatan()">
+                            {% if data_investasi.status_master_investasi == -1 %}
+                                {% if data_detail_investasi_value.sisa > 0 %}
+                                    <div id="divider_button_tambah_pekerjaan" class="mycontent-left mx-2"></div>
+                                    <button type="button" id="button_tambah_pekerjaan" class="btn btn-success px-4" onclick="window.location = '{{id_pekerjaan}}/tambah_kegiatan'">Tambah Kegiatan</button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body h-100 overflow-hidden">
+                    <div id="kegiatan-list" class="overflow-auto hide_scroll h-100"> {% comment %} tempat ajax daftar project {% endcomment %}
+                        
+                    </div>
+                </div>
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Masukkan Realisasi Biaya Kegiatan</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                        <form id="submit_kegiatan" onsubmit="markdone(this)">
+                            <div class="modal-body">
+                                <div class="input-group">
+                                    <span class="input-group-text" id="addon-wrapping">IDR</span>
+                                    <input class="form-control" type="number" step="any" placeholder="Masukkan budget kegiatan" name="budget_kegiatan" value="0.00" id="input_harga_kegiatan" min="1000" onkeyup="harga_tip(this.value)" required>
+                                </div>
+                                <div id="hargaHelp" class="form-text ms-1">IDR 0.00</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary">Simpan</button>
+                            </div>
+                        </form>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        function list_kegiatan(){
+            const url = "{% url 'ajax_daftar_kegiatan' %}";        // get the url of the view
+            const search = document.getElementById("search-kegiatan-id").value;
+            const id_detail_investasi = "{{data_pekerjaan.id_detail_investasi}}";
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'id_investasi': "{{id_investasi}}",
+                    'nama_pekerjaan': search,
+                    'id_detail_investasi': id_detail_investasi     
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    $("#kegiatan-list").html(data);
+                }
+            });
+        }
+
+        function show_button(){
+            const url = "{% url 'ajax_daftar_kegiatan_button' %}";
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'id_investasi': "{{id_investasi}}",
+                    'id_pekerjaan': "{{data_pekerjaan.id_detail_investasi}}"
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    if(data[0]==-1 || data[1]>0){
+                        document.getElementById('divider_button_tambah_pekerjaan').style.display = '';
+                        document.getElementById('button_tambah_pekerjaan').style.display = '';
+                    } else {
+                        document.getElementById('divider_button_tambah_pekerjaan').style.display = 'none';
+                        document.getElementById('button_tambah_pekerjaan').style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            {% if data_investasi.status_master_investasi == -1 %}
+                show_button();
+            {% endif %}
+            list_kegiatan();
+        });
+
+        setInterval(function(){
+            list_kegiatan();
+            {% if data_investasi.status_master_investasi == -1 %}
+                show_button();
+            {% endif %}
+        }, 6000);
+
+    
+
+        function confirmHapus(val){
+            let confirmAction = confirm("Apakah anda yakin ingin menghapus kegiatan ini?");
+            if(confirmAction){
+                const url = '/hapuskegiatan/'+val;
+
+                $.ajax({                       // initialize an AJAX request
+                    url: url,                 // set the url of the request (=)
+                    data: {
+                        'id_pekerjaan': val // add the data to the GET parameters    
+                    },
+                    success: function (data) {   // `data` is the return of the view function
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+        function confirmApprove(val){
+            let confirmAction = confirm("Apakah anda yakin ingin menyetujui pergantian budget?");
+            if(confirmAction){
+                let confirmAction2 = confirm("Apakah anda yakin?");
+                if(confirmAction2){
+                    const url = '/approvekegiatan/'+val;
+
+                    $.ajax({                       // initialize an AJAX request
+                        url: url,                 // set the url of the request (=)
+                        data: {
+                            'id_pekerjaan': val // add the data to the GET parameters    
+                        },
+                        success: function (data) {   // `data` is the return of the view function
+                            location.reload();
+                        }
+                    });
+                }
+            } else {
+                let confirm2 = confirm("Apakah anda yakin?");
+                if(confirm2){
+                    const url = '/disapprovekegiatan/'+val;
+
+                    $.ajax({                       // initialize an AJAX request
+                        url: url,                 // set the url of the request (=)
+                        data: {
+                            'id_pekerjaan': val // add the data to the GET parameters    
+                        },
+                        success: function (data) {   // `data` is the return of the view function
+                            location.reload();
+                        }
+                    });
+                }
+            }
+        }
+
+        function set_submit_data(val){
+            document.getElementById("submit_kegiatan").setAttribute("data-id", val.getAttribute("data-idpekerjaan"));
+
+            var formatter = new Intl.NumberFormat('en-US', {
+                maximumFractionDigits: 2,
+                roundingIncrement: 5
+            });
+            document.getElementById("input_harga_kegiatan").value = val.getAttribute("data-biayamax");
+            document.getElementById("hargaHelp").innerHTML = "IDR "+formatter.format(document.getElementById("input_harga_kegiatan").value)+" || IDR "+formatter.format(val.getAttribute("data-biayamax"))+" (Maksimal)";
+            document.getElementById("hargaHelp").setAttribute("biayamax", val.getAttribute("data-biayamax"));
+
+        }
+        
+        function harga_tip(val){
+            var formatter = new Intl.NumberFormat('en-US', {
+                maximumFractionDigits: 2,
+                roundingIncrement: 5
+            });
+            max_harga = document.getElementById("hargaHelp").getAttribute("biayamax");
+            document.getElementById("hargaHelp").innerHTML = "IDR "+formatter.format(val)+" || IDR "+formatter.format(max_harga)+" (Maksimal)";
+        }
+
+        function markdone(value){
+            //cek apakah harga realisasi melebihi harga rencana
+            harga_rencana = document.getElementById("hargaHelp").getAttribute("biayamax") * 1;
+            harga_realisasi = document.getElementById("input_harga_kegiatan").value;
+            console.log("harga_rencana: "+harga_rencana);
+            console.log("harga_realisasi: "+harga_realisasi);
+            if(harga_realisasi > harga_rencana){
+                {% if request.session.jabatan_pengguna == 0 %}
+                    if(confirm("Budget realisasi melebihi rencana, anda yakin untuk melanjutkan?")){
+                        ajax_selesai(value);
+                    }
+                {% else %}
+                    if(confirm("Budget realisasi melebihi rencana, apakah anda ingin mengajukan pergantian budget?")){
+                        ajax_penawaran(value);
+                    }
+                {% endif %}
+            } else {
+                console.log("masuk");
+                ajax_selesai(value);
+            }
+        }
+
+        function ajax_penawaran(value){
+            val = value.getAttribute("data-id");
+            kunci_pekerjaan = 1;
+            nilai_tawaran_pekerjaan = document.getElementById("input_harga_kegiatan").value;
+            const url = '/pengajuan_kegiatan/'+val;
+            $.ajax({                       // initialize an AJAX request
+                url: url,                 // set the url of the request (=)
+                data: {
+                    'id_pekerjaan': val, // add the data to the GET parameters
+                    'kunci_pekerjaan': kunci_pekerjaan,
+                    'nilai_tawaran_pekerjaan': nilai_tawaran_pekerjaan
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    {% if data_investasi.status_master_investasi == -1 %}
+                        show_button();
+                    {% endif %}
+                    list_kegiatan();
+                }
+            });
+        }
+
+        function ajax_selesai(value){
+            val = value.getAttribute("data-id");
+            nilai_pekerjaan = document.getElementById("input_harga_kegiatan").value;
+            const url = '/markdone_kegiatan/'+val;
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                 // set the url of the request (=)
+                data: {
+                    'id_pekerjaan': val, // add the data to the GET parameters  
+                    'nilai_pekerjaan': nilai_pekerjaan  
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    {% if data_investasi.status_master_investasi == -1 %}
+                        show_button();
+                    {% endif %}
+                    list_kegiatan();
+                }
+            });
+        }
+
+        function markundone(val){
+            const url = '/markundone_kegiatan/'+val;
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                 // set the url of the request (=)
+                data: {
+                    'id_pekerjaan': val // add the data to the GET parameters    
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    {% if data_investasi.status_master_investasi == -1 %}
+                        show_button();
+                    {% endif %}
+                    list_kegiatan();
+                }
+            });
+        }
+    </script>
+{% endblock %}

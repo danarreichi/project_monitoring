@@ -1,0 +1,238 @@
+{% extends 'monitoring.html' %}
+{% load static %}
+{% block title %}
+    <title> Monitoring | Proyek </title> 
+{% endblock %}
+{% block content %}
+    <div class="container d-flex flex-column vh-100 p-3">
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </symbol>
+            <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </symbol>
+            <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </symbol>
+        </svg>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill"/></svg>
+                {{message}}
+                <button type="button" class="btn-close ms-4" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="card h-100 shadow-sm" style="min-height: 90%">
+            <div class="card-header">
+                <div class="d-sm-flex flex-row justify-content-between">
+                    <div class="d-flex flex-row justify-content-center align-items-center">
+                        <img src="{% static 'img/ico_proyek_black.svg' %}" draggable="false" style="width: 32px; height: 32px">
+                        <span class="mx-2" style="font-size:1.5em; font-weight: 400">Detail Proyek</span>
+                    </div>
+                    <div class="d-flex flex-row">
+                        {% if request.session.jabatan_pengguna == 0 %}
+                            <button type="button" class="btn btn-success" id="btn_ubahData" onclick="show_batalkan()">Ubah Data</button>
+                            <button type="button" class="btn btn-success" id="btn_simpanData" onclick="save_form()" style="display: none;">Simpan</button>
+                            <button class="btn btn-danger ms-3" id="btn_batalUbah" onclick="show_ubah()" style="display: none;">Batalkan</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body overflow-auto hide_scroll">
+                <form action="/proyek/detail_proyek/{{data_investasi.id_investasi}}/save" id="form_proyek" method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex flex-column h-100">
+                        <input type="hidden" id="input_kota" name="kota" required>
+                        <input type="hidden" id="input_status_investasi" value="{{data_investasi.status_master_investasi}}" name="input_status_investasi" required>
+                        <label for="nama_proyek" class="form-label">Nama Proyek</label>
+                        <input class="form-control w-50" type="text" placeholder="Masukkan nama proyek" name="nama_proyek" value="{{data_investasi.nama_investasi}}" id="input_nama_proyek" readonly required>
+
+                        <label for="budget_proyek" class="form-label mt-4">Budget Proyek</label>
+                        <div class="input-group w-50">
+                            <span class="input-group-text" id="addon-wrapping">IDR</span>
+                            <input class="form-control" type="number" placeholder="Masukkan harga" id="budget_proyek" name="budget_proyek" value="{{data_investasi.nilai_investasi|floatformat}}" onkeyup="harga_tip(this.value)" id="input_harga_proyek" min="0" readonly required>
+                        </div>
+                        <div id="hargaHelp" class="form-text ms-1">IDR 0.00</div>
+
+                        <label for="uraian" class="form-label mt-4">Uraian Proyek</label>
+                        <textarea name="uraian" class="form-control w-50" value="{{data_investasi.uraian}}" id="input_uraian" readonly required>{{data_investasi.uraian}}</textarea>
+
+                        <label for="penanggung_jawab" class="form-label mt-4">Penanggung Jawab</label>
+                        <div class="input-group w-50">
+                            <select name="penanggung_jawab" class="form-select" id="input_penanggung_jawab" disabled required>
+                                <option value="" style="display: none" selected>Pilih Penanggung Jawab</option>
+                                {% for penanggungjawab in data_penanggungjawab %}
+                                    <option value="{{penanggungjawab.id_pengguna}}">{{penanggungjawab.nama_pengguna}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <label for="tanggal_mulai" class="form-label mt-4">Tanggal Mulai Proyek</label>
+                        <input type="date" class="form-control w-50" name="tanggal_mulai" value="{{data_investasi.tanggal_mulai|date:'Y-m-d'}}" id="input_tanggal_mulai" readonly required>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block right_sidebar_content %}
+    <div class="d-flex flex-row justify-content-start align-items-center">
+        <img src="{% static 'img/ico_lokasi_black.svg' %}" draggable="false">
+        <span class="fw-bold ms-3" style="color: #454545; font-size: 1.2em;">Lokasi Proyek</span>
+    </div>
+    <select class="form-select mt-4" name="lokasi_proyek" onchange="change_lokasi()" id="input_lokasi_proyek" disabled>
+        {% for lokasi in data_lokasi %} 
+            <option value="{{lokasi.id_lokasi}}">{{lokasi.nama_lokasi}}</option>
+        {% endfor %}
+    </select>
+    <div class="d-flex flex-row justify-content-start mt-4 align-items-center">
+        <img src="{% static 'img/ico_status_black.svg' %}" draggable="false">
+        <span class="fw-bold ms-3" style="color: #454545; font-size: 1.2em;">Status Proyek</span>
+    </div>
+    <select class="form-select mt-4" name="status_proyek" onchange="set_status(this.value)" id="status_proyek" disabled>
+        <option value="1" {% if data_investasi.status_master_investasi == 1 %}selected{% endif %}>Aktif</option>
+        <option value="2" {% if data_investasi.status_master_investasi == 2 %}selected{% endif %}>Selesai</option>
+        <option value="-1" {% if data_investasi.status_master_investasi == -1 %}selected{% endif %}>Pending</option>
+        <option value="0" {% if data_investasi.status_master_investasi == 0 %}selected{% endif %}>Tertunda</option>
+    </select>
+    <hr class="rounded mt-4">
+    <button class="btn btn-primary mt-2 w-100" id="btn_daftarPekerjaan" style="background-color: #00A4F6; border-color: #00A4F6;" onclick="window.location.href = '/proyek/detail_proyek/{{data_investasi.id_investasi}}/daftar_pekerjaan'">Daftar Pekerjaan</button>
+    <script>
+        //form-input
+        var i = document.getElementById("input_kota");
+        var x = document.getElementById("input_nama_proyek");
+        var y = document.getElementById("budget_proyek");
+        var z = document.getElementById("input_uraian");
+        var a = document.getElementById("input_penanggung_jawab");
+        var k = document.getElementById("input_tanggal_mulai");
+        var f = document.getElementById("input_lokasi_proyek");
+        var g = document.getElementById("status_proyek");
+        var h = document.getElementById("input_status_investasi");
+        var n = document.getElementById("btn_daftarPekerjaan");
+
+        //input-value
+        var i1, x1, y1, z1, a1, k1, f1, g1, h1
+
+        var c = document.getElementById("btn_ubahData");
+        var d = document.getElementById("btn_simpanData");
+        var e = document.getElementById("btn_batalUbah");
+
+
+        function getData(){
+            i1 = i.value;
+            x1 = x.value;
+            y1 = y.value;
+            z1 = z.value;
+            a1 = a.value;
+            k1 = k.value;
+            f1 = f.value;
+            g1 = g.value;
+            h1 = h.value;
+        }
+
+        function restoreData(){
+            i.value = i1;
+            x.value = x1;
+            y.value = y1;
+            z.value = z1;
+            a.value = a1;
+            k.value = k1;
+            f.value = f1;
+            g.value = g1;
+            h.value = h1;
+            change_lokasi();
+            harga_tip(y1);
+        }
+
+        function show_batalkan(){
+            c.style.display = "none";
+            d.style.display = "";
+            n.style.display = "none";
+            e.style.display = "";
+            f.classList.add("bg-light");
+            g.classList.add("bg-light");
+
+            x.readOnly = false;
+            y.readOnly = false;
+            z.readOnly = false;
+            k.readOnly = false;
+            a.disabled = false;
+            f.disabled = false;
+            g.disabled = false;
+        }
+
+        function show_ubah(){
+            c.style.display = "";
+            n.style.display = "";
+            d.style.display = "none";
+            e.style.display = "none";
+            f.classList.remove("bg-light");
+            g.classList.remove("bg-light");
+
+            restoreData();
+            x.readOnly = true;
+            y.readOnly = true;
+            z.readOnly = true;
+            k.readOnly = true;
+            a.disabled = true;
+            f.disabled = true;
+            g.disabled = true;
+        }
+
+        function harga_tip(val){
+            var formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'IDR',
+              });
+            document.getElementById("hargaHelp").innerHTML = formatter.format(val);
+        }
+
+        function save_form(){
+            var valid
+            valid = document.getElementById("form_proyek").checkValidity();
+            if (valid == false){
+              alert("Isian Tidak Boleh Kosong");
+            } else {
+              document.getElementById("form_proyek").submit();
+            }
+        }
+
+        function change_lokasi(){
+            const lokasi = f.value;
+            const url = "{% url 'ajax_change_lokasi' %}"
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'lokasi_proyek': lokasi       
+                },
+                success: function () {   // `data` is the return of the view function
+                    document.getElementById("input_kota").value = lokasi;
+                }
+            });
+        }
+
+        function set_status(val){
+            h.value = val;
+        }
+
+        function harga_tip_initial(){
+            var formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'IDR',
+              });
+            document.getElementById("hargaHelp").innerHTML = formatter.format(document.getElementById("budget_proyek").value);
+        }
+
+        $(document).ready(function() {
+            $("#input_lokasi_proyek option[value={{data_investasi.id_lokasi_id}}]").attr("selected", true);
+            $("#input_penanggung_jawab option[value={{data_investasi.id_penanggung_jawab_id}}]").attr("selected", true);
+            document.getElementById("input_kota").value = document.getElementById("input_lokasi_proyek").value;
+            harga_tip_initial();
+            getData();
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,34 @@
+[
+  {
+    "model": "monitoring.masterlokasi",
+    "fields": {
+        "id_lokasi": 1,
+        "nama_lokasi": "Surabaya"
+    }
+  },
+  {
+    "model": "monitoring.masterlokasi",
+    "fields": {
+        "id_lokasi": 2,
+        "nama_lokasi": "Lamongan"
+    }
+  },
+  {
+    "model": "monitoring.masterpengguna",
+    "fields": {
+        "id_pengguna": "admin",
+        "nama_pengguna": "Admin",
+        "password_pengguna": "admin",
+        "jabatan_pengguna": 0
+    }
+  },
+  {
+    "model": "monitoring.masterpengguna",
+    "fields": {
+        "id_pengguna": "user",
+        "nama_pengguna": "Cloud",
+        "password_pengguna": "user",
+        "jabatan_pengguna": 1
+    }
+  }
+]

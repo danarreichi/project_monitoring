@@ -1,0 +1,80 @@
+{% load static %}
+{% load humanize %}
+{% if data_pekerjaan %}
+{% for pekerjaan in data_pekerjaan %}
+<div id="placeholder_detail_investasi" class="d-flex flex-row py-2 px-4 mb-1 justify-content-between back_hover" index-value="{{forloop.counter}}" id-value="{{pekerjaan.id_detail_investasi}}">
+    <div class="d-flex flex-column" style="color:#454545; width: 70%;"> {% comment %} nama_proyek, est_selesai, edited_by {% endcomment %}
+        <span class="fs-3 fw-semibold text fit_text">{{pekerjaan.nama_detail_investasi}}</span>
+        <div class="d-flex justify-content-start align-items-center">
+            <img class="me-1" src="{% static 'img/ico_calendar_gray.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" style="color:#454545">est. selesai: {{pekerjaan.tanggal_selesai_detail_investasi}}</span>
+            <img class="me-1" src="{% static 'img/ico_biaya_black.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" title="Rp{{pekerjaan.nilai_detail_investasi|intcomma}}" style="color:#454545">Rencana Biaya: Rp{{pekerjaan.nilai_detail_investasi|intword }}</span>
+            <img class="me-1" src="{% static 'img/ico_biaya_black.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" title="Rp{{pekerjaan.pemakaian|intcomma}}" style="color:#454545">Realisasi Biaya: Rp{% if pekerjaan.pemakaian %}{{pekerjaan.pemakaian|intword}}{% else %}0{% endif %}</span>
+            {% if pekerjaan.jml_pengajuan > 0 %}<span class="badge rounded-pill text-bg-danger">{{pekerjaan.jml_pengajuan|intword}} {% if request.session.jabatan_pengguna == 0%}Permintaan{% else %}Pengajuan{% endif %}</span>{% endif %}
+        </div>
+    </div>
+    <div class="d-flex flex-row align-items-center justify-content-end" style="width: 30%;">
+        <div class="d-flex flex-column justify-content-center align-items-start w-75">
+            <span class="fw-semibold mb-1" style="color:#454545"; font-size:0.5rem>{{pekerjaan.pct|floatformat:1}}% Penyelesaian</span>
+            <div class="progress w-100" style="background-color: #DBDBDB;">
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{pekerjaan.pct|floatformat:"2u"}}" aria-valuemin="0" aria-valuemax="100" style="width: {{pekerjaan.pct|stringformat:"F"}}%; background-color: #00A4F6;"></div>
+            </div>
+        </div>
+        {% if data_investasi.status_master_investasi == -1 %}
+            {% if pekerjaan.status_kunci_detail_investasi == 0 %}
+                <img class="ms-4 vw-25 detail_hover" src="{% static 'img/ico_delete_black.svg' %}" draggable="false" onclick="confirmHapus({{pekerjaan.id_detail_investasi}})" title="Hapus Pekerjaan" style="width: 28px; height: 28px;">
+            {% endif %}
+        {% endif %}
+        <img class="ms-4 vw-25 detail_hover" src="{% static 'img/ico_arrow_gray.svg' %}" draggable="false" onclick="window.location.href = 'daftar_kegiatan/{{pekerjaan.id_detail_investasi}}'" title="Daftar Kegiatan" style="width: 28px; height: 28px;">
+    </div>
+</div>
+{% endfor %}
+{% else %}
+    <div class="d-flex flex-row py-2 px-4 justify-content-center align-items-center" style="height: 100%;">
+        {% if tab_status == '0' %}    
+            <div class="d-flex flex-row align-items-center justify-items-center"> <p>Tidak ada pekerjaan berjalan saat ini{% if request.session.jabatan_pengguna == 0 %}{% if data_investasi.status_master_investasi == -1 %}, coba</p><span class="hover_text" {% if data_investasi.status_kunci_investasi == 0 %} style="font-weight: 600; color: #198754;" onclick="window.location = '/proyek/detail_proyek/{{id_investasi}}/tambah_pekerjaan'" {% else %} style="font-weight: 600; color: #bb2d3b;" onclick="window.location = '/proyek/detail_proyek/{{id_investasi}}/tambah_pekerjaan_forced'" {% endif %}> <p> &nbsp;tambahkan&nbsp; </p> </span> <p>sesuatu...</p>{% endif %}{% else %} </p> {% endif %}</div>
+        {% else %}
+            <div class="d-flex flex-row align-items-center justify-items-center"> <p>Tidak ada pekerjaan selesai saat ini</p></div>
+        {% endif %}
+    </div>
+{% endif %}
+<script>
+    var id_proyek;
+    var selected_item = "{{request.session.selected_item}}";
+
+    function confirmHapus(val){
+        let confirmAction = confirm("Apakah anda yakin ingin menghapus pekerjaan ini?");
+        if(confirmAction){
+            window.location = '/hapuspekerjaan/'+val;
+        }
+    }
+    {% comment %} setInterval(function(){
+        if(id_proyek){
+            detail_proyek(id_proyek);
+        }
+     }, 6000) {% endcomment %}
+
+    {% comment %} $(".back_hover").click(function() {
+        id_pekerjaan = $(this).attr("id-value");
+        $(".back_hover").removeClass('active');
+        window.location.href = 'daftar_kegiatan/'+id_pekerjaan;
+        //detail_proyek(id_proyek);
+    }); {% endcomment %}
+
+    {% comment %} if(selected_item){
+        detail_proyek(selected_item);
+    } {% endcomment %}
+
+    {% comment %} function detail_proyek(val){
+        const url = "{% url 'ajax_detail_proyek' %}";
+        const id_proyek = val;
+        $.ajax({                       // initialize an AJAX request
+            url: url,                 // set the url of the request (=)
+            data: {
+                'id_proyek': id_proyek // add the data to the GET parameters    
+            },
+            success: function (data) {   // `data` is the return of the view function
+              $("#detail-proyek").html(data);
+            }
+        });
+    } {% endcomment %}
+</script>

@@ -1,0 +1,144 @@
+{% extends 'monitoring.html' %}
+{% load static %}
+{% block title %}
+    <title> Monitoring | Proyek </title> 
+{% endblock %}
+{% block content %}
+    <div class="container d-flex flex-column vh-100 p-3">
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </symbol>
+            <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </symbol>
+            <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </symbol>
+        </svg>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill"/></svg>
+                {{message}}
+                <button type="button" class="btn-close ms-4" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="card h-100 shadow-sm" style="min-height: 90%">
+            <div class="card-header">
+                <div class="d-sm-flex flex-row justify-content-between">
+                    <div class="d-flex flex-row justify-content-center align-items-center">
+                        <img src="{% static 'img/ico_proyek_black.svg' %}" style="width: 32px; height: 32px" draggable="false">
+                        <span class="mx-2" style="font-size:1.5em; font-weight: 400">Daftar Proyek</span>
+                    </div>
+                    <div class="d-flex flex-row justify-content-end align-items-center w-75">
+                        <input class="form-control w-50" type="search" placeholder="Cari Proyek ..." aria-label="Search" id="search-proyek-id" onkeyup="list_proyek()">
+                        {% if request.session.jabatan_pengguna == 0 %}
+                            <div class="mycontent-left mx-2">
+                            </div>
+                            <button type="button" class="btn btn-success w-25" onclick="window.location = '{% url 'tambah_proyek' %}'">Tambah Proyek</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body h-100">
+                <ul class="nav nav-pills nav-fill">
+                    <li class="nav-item mx-1">
+                      <a class="nav-link active fw-semibold position-relative tab_status" draggable="false" tab-value="1" href="#">Aktif</a>
+                    </li>
+                    <li class="nav-item mx-1">
+                        <a class="nav-link tab_status greyed_out" draggable="false" tab-value="-1" href="#">Pending</a>
+                      </li>
+                    <li class="nav-item mx-1">
+                      <a class="nav-link tab_status greyed_out" draggable="false" tab-value="2" href="#">Selesai</a>
+                    </li>
+                    <li class="nav-item mx-1">
+                      <a class="nav-link tab_status greyed_out" draggable="false" tab-value="0" href="#">Tertunda</a>
+                    </li>
+                </ul>
+                <hr class="rounded">
+                <div id="proyek-list" class="overflow-auto hide_scroll" style="height: 75vh;"> {% comment %} tempat ajax daftar project {% endcomment %}
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block right_sidebar_content %}
+    <div class="d-flex flex-row justify-content-start align-items-center">
+        <img src="{% static 'img/ico_lokasi_black.svg' %}" draggable="false">
+        <span class="fw-bold ms-3" style="color: #454545; font-size: 1.2em;">Pilih Lokasi Proyek</span>
+    </div>
+    <select class="form-select mt-4 bg-light" name="lokasi_proyek" id="input_lokasi_proyek" onchange="list_proyek()" data-url="{% url 'ajax_load_proyek' %}">
+        {% for lokasi in data_lokasi %}
+            <option value="{{lokasi.id_lokasi}}">{{lokasi.nama_lokasi}}</option>
+        {% endfor %}
+    </select>
+    <select class="form-select mt-4 bg-light" name="periode_tahun" id="periode_tahun" onchange="list_proyek()">
+        <option value="null">Semua Periode</option>
+        {% for periode in periode_tahun %}
+            <option value="{{periode.tanggal_mulai__year}}">{{periode.tanggal_mulai__year}}</option>
+        {% endfor %}
+    </select>
+    <div id="detail-proyek">
+    </div>
+    
+    <script>
+        var tab_status;
+        var periode = "{{request.session.periode}}";
+        if(periode == ""){
+            periode = "null";
+        }
+        
+        function list_proyek(val){
+            if(val){
+                active_tab = val;
+            } else if(tab_status) {
+                active_tab = tab_status;
+            } else {
+                active_tab = 1;
+            }
+            const url = $("#input_lokasi_proyek").attr("data-url");  // get the url of the view
+            const lokasi_proyek = document.getElementById("input_lokasi_proyek").value;  // get the selected supplier ID from the HTML input
+            const search = document.getElementById("search-proyek-id").value;
+            const periode = document.getElementById("periode_tahun").value;
+            const id_pengguna = "{{request.session.id_pengguna_login}}";
+
+            $.ajax({                       // initialize an AJAX request
+                url: url,                    // set the url of the request (=)
+                data: {
+                    'lokasi_proyek': lokasi_proyek, // add the data to the GET parameters
+                    'tab_status' : active_tab,
+                    'search': search,
+                    'id_pengguna': id_pengguna,
+                    'periode_tahun':periode   
+                },
+                success: function (data) {   // `data` is the return of the view function
+                    $("#proyek-list").html(data);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $("#input_lokasi_proyek option[value={{request.session.lokasi_proyek}}]").attr("selected", true);
+            $("#periode_tahun option[value="+periode+"]").attr("selected", true);
+            list_proyek();
+        });
+
+        setInterval(function(){
+            list_proyek();
+        }, 6000)
+
+        $(".tab_status").click(function() {
+            tab_status = $(this).attr("tab-value");
+            $(".tab_status").removeClass('active fw-semibold');
+            $(".tab_status").addClass('greyed_out');
+
+            $("[tab-value='"+ tab_status +"']").removeClass('greyed_out');
+            $("[tab-value='"+ tab_status +"']").addClass('active fw-semibold');
+            list_proyek($(this).attr("tab-value"));
+        });
+    </script>
+{% endblock %}

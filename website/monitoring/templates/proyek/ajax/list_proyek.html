@@ -1,0 +1,82 @@
+{% load static %}
+{% load humanize %}
+{% if investasi_data %}
+<script src="{% static 'js/long-press-event.js' %}"></script>
+{% for investasi in investasi_data %}
+<div id="placeholder_detail_investasi" class="d-flex flex-row py-2 px-4 mb-1 justify-content-between back_hover {% if request.session.selected_item == investasi.id_investasi|stringformat:'s' %}active{% endif %}" index-value="{{forloop.counter}}" id-value="{{investasi.id_investasi}}">
+    <div class="d-flex flex-column w-50" style="color:#454545">
+        <span class="fs-3 fw-semibold text fit_text">{{investasi.nama_investasi}}</span>
+        <div class="d-flex justify-content-start align-items-center">
+            <img class="me-1" src="{% static 'img/ico_calendar_gray.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" style="color:#454545">est. selesai: {{investasi.max_date}}</span>
+            <img class="me-1" src="{% static 'img/ico_edit_gray.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" style="color:#454545">oleh: {{investasi.nama_pengguna }}</span>
+            {% if investasi.jml_pengajuan > 0 %}<span class="badge rounded-pill text-bg-danger" title="{{investasi.jml_pengajuan|intword}} {% if request.session.jabatan_pengguna == 0%}Permintaan{% else %}Pengajuan{% endif %}">{{investasi.jml_pengajuan|intword}}</span>{% endif %}
+        </div>
+    </div>
+    <div class="d-flex flex-row align-items-center justify-content-end w-50">
+        <div class="d-flex flex-column justify-content-center align-items-start w-75">
+            <span class="fw-semibold mb-1" style="color:#454545"; font-size:0.5rem> {{investasi.pct_investasi|floatformat:2 }}% Penyelesaian</span>
+            <div class="progress w-100" style="background-color: #DBDBDB;">
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{investasi.pct_investasi|floatformat:"2u" }}" aria-valuemin="0" aria-valuemax="100" style="width: {{investasi.pct_investasi|stringformat:"f" }}%; background-color: #00A4F6;"></div>
+            </div>
+        </div>
+        <img {% if request.session.jabatan_pengguna == 0 %}data-long-press-delay="750" data-id="{{investasi.id_investasi}}"{% endif %} class="ms-4 vw-25 detail_hover long_press_btn" src="{% static 'img/ico_arrow_gray.svg' %}" draggable="false" onclick="window.location.href = 'proyek/detail_proyek/{{investasi.id_investasi}}/daftar_pekerjaan'" title="Daftar Pekerjaan" style="width: 28px; height: 28px;">
+    </div>
+</div>
+{% endfor %}
+{% else %}
+    <div class="d-flex flex-row py-2 px-4 justify-content-center align-items-center" style="height: 70vh;">
+        <div class="d-flex flex-row align-items-center justify-items-center"> <p>Data proyek belum tersedia{% if request.session.jabatan_pengguna == 0 %}, coba</p><span class="hover_text" style="font-weight: 600; color: #198754;" onclick="window.location.href = '{% url 'tambah_proyek' %}'"> <p> &nbsp;tambahkan&nbsp; </p> </span> <p>sesuatu...</p> {% else %} </p> {% endif %}</div>
+    </div>
+{% endif %}
+<script>
+
+    {% if request.session.jabatan_pengguna == 0 %}
+    //long-press function
+    // grab the element
+    var el = document.getElementsByClassName("long_press_btn");
+
+    for (var i = 0; i < el.length; i++) {
+        // listen for the long-press event
+        el[i].addEventListener('long-press', function(e) {
+            // stop the event from bubbling up
+            e.preventDefault();
+            window.location.href = 'proyek/detail_proyek/'+this.getAttribute('data-id');
+        });
+    }
+    //end long-press function
+    {% endif %}
+
+    var id_proyek;
+    var selected_item = "{{request.session.selected_item}}";
+
+    setInterval(function(){
+        if(id_proyek){
+            detail_proyek(id_proyek);
+        }
+     }, 6000)
+
+    $(".back_hover").click(function() {
+        id_proyek = $(this).attr("id-value");
+        $(".back_hover").removeClass('active');
+        $(this).addClass('active');
+        detail_proyek(id_proyek);
+    });
+
+    if(selected_item){
+        detail_proyek(selected_item);
+    }
+
+    function detail_proyek(val){
+        const url = "{% url 'ajax_detail_proyek' %}";
+        const id_proyek = val;
+        $.ajax({                       // initialize an AJAX request
+            url: url,                 // set the url of the request (=)
+            data: {
+                'id_proyek': id_proyek // add the data to the GET parameters    
+            },
+            success: function (data) {   // `data` is the return of the view function
+              $("#detail-proyek").html(data);
+            }
+        });
+    }
+</script>

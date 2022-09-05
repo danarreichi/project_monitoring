@@ -1,0 +1,57 @@
+{% load static %}
+{% load humanize %}
+{% if data_kegiatan %}
+{% for kegiatan in data_kegiatan %}
+<div id="placeholder_detail_investasi" class="d-flex flex-row py-2 px-4 mb-1 justify-content-between back_hover" index-value="{{forloop.counter}}" id-value="{{kegiatan.id_pekerjaan}}">
+    <div class="d-flex flex-column" style="color:#454545; width: 60%;"> {% comment %} nama_proyek, est_selesai, edited_by {% endcomment %}
+        <span class="fs-3 fw-semibold text fit_text">{{kegiatan.nama_pekerjaan}}</span>
+        <div class="d-flex justify-content-start align-items-center">
+            <img class="me-1" src="{% static 'img/ico_calendar_gray.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" style="color:#454545">tgl. mulai: {{kegiatan.tanggal_mulai}}</span>
+            {% if kegiatan.tanggal_selesai %}
+            <img class="me-1" src="{% static 'img/ico_calendar_gray.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" style="color:#454545">tgl. selesai: {{kegiatan.tanggal_selesai}}</span>
+            {% endif %}
+            <img class="me-1" src="{% static 'img/ico_biaya_black.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" title="Rp{{kegiatan.nilai_pekerjaan|intcomma}}" style="color:#454545">Biaya: Rp{{kegiatan.nilai_pekerjaan|intword }}</span>
+            {% if kegiatan.kunci_pekerjaan == 1 %}
+                <img class="me-1" src="{% static 'img/ico_pending_grey.svg' %}" draggable="false"> <span class="fw-semibold fs-6 me-3" title="Rp{{kegiatan.nilai_tawaran_pekerjaan|intcomma}}" style="color:#454545"> {% if request.session.jabatan_pengguna == 0 %}Permintaan: {% else %}Mengajukan: {% endif %}Rp{{kegiatan.nilai_tawaran_pekerjaan|intword }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if kegiatan.status_pekerjaan == 0 %}
+    <div class="d-flex flex-row align-items-center justify-content-end" style="width: 40%;">
+        <div class="d-flex flex-column justify-content-center align-items-end w-75">
+            <span class="fw-semibold mb-1" style="color:#454545"; font-size:0.5rem>Belum Selesai</span>
+        </div>
+        {% if data_investasi.status_master_investasi == 1 %}
+            <img class="ms-4 vw-25 detail_hover" src="{% static 'img/ico_black_uncheck.svg' %}" draggable="false" data-idpekerjaan="{{kegiatan.id_pekerjaan}}" onclick="set_submit_data(this)" data-biayamax="{{kegiatan.nilai_pekerjaan|stringformat:".2f"}}" data-bs-toggle="modal" data-bs-target="#exampleModal" title="Tandai menjadi selesai" style="width: 28px; height: 28px;">
+        {% endif %}
+        {% if data_investasi.status_master_investasi == -1 %}
+            <img class="vw-25 detail_hover ms-3" src="{% static 'img/ico_delete_black.svg' %}" draggable="false" onclick="confirmHapus({{kegiatan.id_pekerjaan}})" title="Hapus Kegiatan" style="width: 28px; height: 28px;">
+        {% endif %}
+        {% if kegiatan.kunci_pekerjaan == 1 and request.session.jabatan_pengguna == 0 %}
+            <img class="vw-25 detail_hover ms-3" src="{% static 'img/ico_approve_grey.svg' %}" draggable="false" onclick="confirmApprove({{kegiatan.id_pekerjaan}})" title="Approve Permintaan" style="width: 26px; height: 26px;">
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="d-flex flex-row align-items-center justify-content-end" style="width: 40%;">
+        <div class="d-flex flex-column justify-content-center align-items-end w-75">
+            <span class="fw-semibold mb-1" style="color:#454545"; font-size:0.5rem>Sudah Selesai</span>
+        </div>
+        {% if data_investasi.status_master_investasi == 1 %}
+            <img class="ms-4 vw-25 detail_hover" src="{% static 'img/ico_black_check.svg' %}" draggable="false" onclick="markundone({{kegiatan.id_pekerjaan}})" title="Tandai menjadi belum selesai" style="width: 28px; height: 28px;">
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+    <div class="d-flex flex-row py-2 px-4 justify-content-center align-items-center" style="height: 100%;">
+        {% if tab_status == '0' %}    
+            <div class="d-flex flex-row align-items-center justify-items-center"> <p>Selamat tidak ada kegiatan berjalan saat ini{% if request.session.jabatan_pengguna == 0 %}, coba</p><span class="hover_text" style="font-weight: 600; color: #198754;" onclick="window.location = '/proyek/detail_proyek/{{id_investasi}}/tambah_kegiatan'"> <p> &nbsp;tambahkan&nbsp; </p> </span> <p>sesuatu...</p> {% else %} </p> {% endif %}</div>
+        {% else %}
+            <div class="d-flex flex-row align-items-center justify-items-center"> <p>Tidak ada kegiatan untuk pekerjaan ini</p></div>
+        {% endif %}
+    </div>
+{% endif %}
+<script>
+    var id_proyek;
+</script>
